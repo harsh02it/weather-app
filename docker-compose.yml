@@ -1,6 +1,7 @@
 version: '3'
 services:
   backend:
+    image: harsh02it/weather-app-backend:v1.0
     build: ./backend
     ports:
       - "5000:5000"
@@ -8,6 +9,7 @@ services:
       - NODE_ENV=production
       - WEATHER_API_KEY=${WEATHER_API_KEY}
   frontend:
+    image: harsh02it/weather-app-frontend:v1.0
     build: ./frontend
     ports:
       - "80:80"
