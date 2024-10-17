@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-app-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: weather-app-backend
+  template:
+    metadata:
+      labels:
+        app: weather-app-backend
+    spec:
+      containers:
+        - name: backend
+          image: harsh02it/weather-app-backend:latest
+          ports:
+            - containerPort: 3000

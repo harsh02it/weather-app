@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weather-app-frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: weather-app-frontend
+  template:
+    metadata:
+      labels:
+        app: weather-app-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: harsh02it/weather-app-frontend:latest
+          ports:
+            - containerPort: 80
