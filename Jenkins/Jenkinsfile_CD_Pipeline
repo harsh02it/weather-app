@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKER_HUB_USERNAME = 'harsh02it'
+        VERSION = "v1.0"
+        WEATHER_API_KEY = credentials('weather-api-key')
+        FRONTEND_IMAGE = "${DOCKER_HUB_USERNAME}/weather-app-frontend:${VERSION}"
+        BACKEND_IMAGE = "${DOCKER_HUB_USERNAME}/weather-app-backend:${VERSION}"
+    }
+
+    stages {
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
+                    echo 'Logged in to Docker Hub successfully!'
+                }
+            }
+        }
+
+        stage('Deploy Frontend to Server') {
+            steps {
+                script {
+                    echo 'Stopping and removing any existing frontend container...'
+                    sh "docker stop weather-app-frontend || true && docker rm weather-app-frontend || true"
+                    
+                    echo 'Deploying Frontend Docker image...'
+                    sh "docker pull ${FRONTEND_IMAGE}"
+                    sh "docker run -d --name weather-app-frontend -p 80:80 ${FRONTEND_IMAGE}"
+                    echo "Frontend deployed successfully!"
+                }
+            }
+        }
+        
+        stage('Deploy Backend to Server') {
+            steps {
+                script {
+                    echo 'Stopping and removing any existing backend container...'
+                    sh "docker stop weather-app-backend || true && docker rm weather-app-backend || true"
+                    
+                    echo 'Deploying Backend Docker image...'
+                    sh "docker pull ${BACKEND_IMAGE}"
+                    sh "docker run -d --name weather-app-backend -p 5000:5000 ${BACKEND_IMAGE}"
+                    echo "Backend deployed successfully!"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                sh 'docker logout || true'
+            }
+        }
+    }
+}

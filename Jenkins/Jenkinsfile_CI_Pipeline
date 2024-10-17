@@ -1,0 +1,71 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_HUB_CREDENTIALS = credentials('docker-hub-credentials')
+        DOCKER_HUB_USERNAME = 'harsh02it'
+        VERSION = "v1.0"
+        FRONTEND_IMAGE = "${DOCKER_HUB_USERNAME}/weather-app-frontend:${VERSION}"
+        BACKEND_IMAGE = "${DOCKER_HUB_USERNAME}/weather-app-backend:${VERSION}"
+    }
+
+    stages {
+        stage('Git Checkout Code') {
+            steps {
+                script {
+                    git branch: 'main', url: 'https://github.com/harsh02it/weather-app.git'
+                    
+                    echo 'Git checkout completed successfully!'
+                }
+            }
+        }
+    
+        stage('Login to Docker Hub') {
+            steps {
+                script {
+                    sh 'echo $DOCKER_HUB_CREDENTIALS_PSW | docker login -u $DOCKER_HUB_CREDENTIALS_USR --password-stdin'
+                    
+                    echo 'Docker login successful!'
+                }
+            }
+        }
+        
+        stage('Run Docker') {
+            steps {
+                script {
+                    def dockerRunning = sh(script: 'docker info', returnStatus: true) == 0
+                    if (!dockerRunning) {
+                        echo 'Docker is not running. Attempting to start Docker...'
+                        sh 'net start com.docker.service'
+                        sleep 10
+                        dockerRunning = sh(script: 'docker info', returnStatus: true) == 0
+                        if (!dockerRunning) {
+                            error 'Failed to start Docker. Please ensure Docker is installed and the Jenkins user has permissions to start it.'
+                        }
+                    }
+                    echo 'Docker is running.'
+                }
+            }
+        }
+        
+        stage('Pull Docker Images') {
+            steps {
+                script {
+                    sh "docker pull ${FRONTEND_IMAGE}"
+                    echo "Frontend image ${FRONTEND_IMAGE} pulled successfully!"
+
+                    sh "docker pull ${BACKEND_IMAGE}"
+                    echo "Backend image ${BACKEND_IMAGE} pulled successfully!"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            script {
+                sh 'docker logout || true'
+            }
+        }
+    }
+}
